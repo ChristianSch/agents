@@ -19,10 +19,10 @@ python_repl_tool = PythonREPLTool()
 # helper utilities
 from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain_core.messages import BaseMessage, HumanMessage
-from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 
 
-def create_agent(llm: ChatOpenAI, tools: list, system_prompt: str):
+def create_agent(llm, tools: list, system_prompt: str):
     # Each worker node will be given a name and some tools.
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -35,7 +35,7 @@ def create_agent(llm: ChatOpenAI, tools: list, system_prompt: str):
         ]
     )
     agent = create_openai_tools_agent(llm, tools, prompt)
-    executor = AgentExecutor(agent=agent, tools=tools)
+    executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parsing_errors=True)
     return executor
 
 def agent_node(state, agent, name):
@@ -87,11 +87,11 @@ prompt = ChatPromptTemplate.from_messages(
     ]
 ).partial(options=str(options), members=", ".join(members))
 
-llm = ChatOpenAI(model="gpt-4-1106-preview")
+llm = ChatAnthropic(model_name="claude-3-opus-20240229")
 
 supervisor_chain = (
     prompt
-    | llm.bind_functions(functions=[function_def], function_call="route")
+    | llm.bind(functions=[function_def], function_call={"name": "route"})
     | JsonOutputFunctionsParser()
 )
 
